@@ -33,3 +33,26 @@ resource "tls_self_signed_cert" "this" {
     }
   }
 }
+
+resource "tls_cert_request" "this" {
+  count           = length(var.tls_cert_request)
+  private_key_pem = join("/", [path.cwd, "certificates", lookup(var.tls_cert_request[count.index], "private_key_pem")])
+  dns_names       = lookup(var.tls_cert_request[count.index], "dns_names")
+  ip_addresses    = lookup(var.tls_cert_request[count.index], "ip_addresses")
+  uris            = lookup(var.tls_cert_request[count.index], "uris")
+
+  dynamic "subject" {
+    for_each = lookup(var.tls_cert_request[count.index], "subject") == null ? [] : ["subject"]
+    content {
+      common_name         = lookup(subject.value, "common_name")
+      country             = lookup(subject.value, "country")
+      locality            = lookup(subject.value, "locality")
+      organization        = lookup(subject.value, "organization")
+      organizational_unit = lookup(subject.value, "organizational_unit")
+      postal_code         = lookup(subject.value, "postal_code")
+      province            = lookup(subject.value, "province")
+      serial_number       = lookup(subject.value, "serial_number")
+      street_address      = lookup(subject.value, "street_address")
+    }
+  }
+}

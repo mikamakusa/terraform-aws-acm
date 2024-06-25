@@ -29,7 +29,7 @@ variable "tls_self_signed_cert" {
   type = list(object({
     id                    = number
     allowed_uses          = list(string)
-    private_key_pem       = string
+    private_key_pem_id    = number
     validity_period_hours = number
     dns_names             = optional(list(string))
     early_renewal_hours   = optional(number)
@@ -38,6 +38,28 @@ variable "tls_self_signed_cert" {
     set_authority_key_id  = optional(bool)
     set_subject_key_id    = optional(bool)
     uris                  = optional(list(string))
+    subject = optional(list(object({
+      common_name         = optional(string)
+      country             = optional(string)
+      locality            = optional(string)
+      organization        = optional(string)
+      organizational_unit = optional(string)
+      postal_code         = optional(string)
+      province            = optional(string)
+      serial_number       = optional(string)
+      street_address      = optional(list(string))
+    })), [])
+  }))
+  default = []
+}
+
+variable "tls_cert_request" {
+  type = list(object({
+    id              = number
+    private_key_pem = string
+    dns_names       = optional(list(string))
+    ip_addresses    = optional(list(string))
+    uris            = optional(list(string))
     subject = optional(list(object({
       common_name         = optional(string)
       country             = optional(string)
@@ -87,10 +109,36 @@ variable "acmpca_certificate_authority" {
     type                            = optional(string)
     usage_mode                      = optional(string)
     certificate_authority_configuration = list(object({
-      key_algorithm     = ""
-      signing_algorithm = ""
+      key_algorithm     = string
+      signing_algorithm = string
+      subject = list(object({
+        common_name                  = optional(string)
+        country                      = optional(string)
+        distinguished_name_qualifier = optional(string)
+        generation_qualifier         = optional(string)
+        given_name                   = optional(string)
+        initials                     = optional(string)
+        locality                     = optional(string)
+        organization                 = optional(string)
+        organizational_unit          = optional(string)
+        pseudonym                    = optional(string)
+        state                        = optional(string)
+        surname                      = optional(string)
+        title                        = optional(string)
+      }))
     }))
-    revocation_configuration = optional(list(object({})), [])
+    revocation_configuration = optional(list(object({
+      crl_configuration = optional(list(object({
+        expiration_in_days = optional(number)
+        custom_cname       = optional(string)
+        enabled            = optional(bool)
+        s3_bucket_id       = optional(number)
+      })), [])
+      ocsp_configuration = optional(list(object({
+        enabled           = optional(bool)
+        ocsp_custom_cname = optional(string)
+      })), [])
+    })), [])
   }))
   default = []
 }
@@ -98,7 +146,7 @@ variable "acmpca_certificate_authority" {
 variable "acmpca_certificate_authority_certificate" {
   type = list(object({
     id                       = number
-    certificate              = string
+    certificate_id           = number
     certificate_authority_id = number
   }))
   default = []
@@ -110,6 +158,7 @@ variable "acmpca_permission" {
     actions                  = list(string)
     certificate_authority_id = number
     principal                = string
+    source_account           = optional(string)
   }))
   default = []
 }
@@ -126,4 +175,21 @@ variable "acmpca_policy" {
     resource_id = number
   }))
   default = []
+}
+
+variable "s3_bucket" {
+  type = list(object({
+    id                  = number
+    bucket              = optional(string)
+    bucket_prefix       = optional(string)
+    force_destroy       = optional(bool)
+    object_lock_enabled = optional(bool)
+    tags                = optional(map(string))
+  }))
+  default = []
+}
+
+variable "tags" {
+  type    = map(string)
+  default = {}
 }
